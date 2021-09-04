@@ -1,6 +1,7 @@
 from os import error
 import time
 import socket
+import proto
 
 # объявление переменных
 addrServer = '192.168.1.100' # '46.188.6.194'
@@ -11,10 +12,14 @@ def connect(addr, port):
     print('Connecting to ' +addr, port)
     srv = socket.socket()
     srv.connect((addr, port))
-    srv.send(bytes('$CONNECT','utf-8'))
-    resp = srv.recv(1024)
 
-    if not resp or resp.decode('utf-8') == '$$CONNECT_REJ':
+    # вызываем из модуля протокола proto.connect(), чтобы отправить на сервер 
+    # запрос на подключение 
+    srv.send(bytes(proto.connect(),'utf-8'))  
+    resp = srv.recv(1024)
+    respMsg = resp.decode('utf-8')
+    print("Server said: ",respMsg)
+    if not resp or respMsg == proto.connectionResult(False):
         print('Connection error')
         return False
 
