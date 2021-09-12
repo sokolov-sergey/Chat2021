@@ -1,4 +1,5 @@
 import socket
+import sys
 import proto
 
 '''
@@ -29,6 +30,9 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
         return False
 
 
+UserId = 1
+
+
 def acceptClient(clientsList: list, timeout=2):
     try:
         # wait for client timeout seconds
@@ -44,8 +48,10 @@ def acceptClient(clientsList: list, timeout=2):
         conn.send(bytes('Dear somebody, you are at my ct2021 server!!!', 'utf-8'))
 
         # save new client connection to list
-        clientsList.append((conn, remoteAddr))
-        return conn
+        userName = "userId: "+str(UserId)
+        newUser = (conn, remoteAddr, userName)
+        clientsList.append(newUser)
+        return newUser
     except socket.timeout:
         # just exit from proc if no new connection was accepted
         pass
@@ -54,9 +60,17 @@ def acceptClient(clientsList: list, timeout=2):
 ########################################################################
 ###################### Main server program starts below ################
 ########################################################################
+
 Addr, Port = "192.168.1.100", 12345
 SrvSoket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ClientsList = []
+
+# server can/cannot use input to send broadcast msg
+ServerInput = False
+
+if len(sys.argv) > 1:
+    ServerInput = sys.argv[1].upper() == "I"
+
 
 print("listening for ", Addr, Port)
 SrvSoket.bind((Addr, Port))
@@ -65,22 +79,34 @@ SrvSoket.listen(30)
 # main loop
 while True:
     try:
+        # check for new connection
+        user = acceptClient(ClientsList, .2)
+        if user:
+            UserId = len(ClientsList)+1
+            print("a new user connected ", user[2])
 
-        acceptClient(ClientsList, .2)
+        # receive clients messages
+        for client in ClientsList:
+            try:
+                (conn, addr, clientName) = client
+                conn.settimeout(.1)
+                data = conn.recv(1024)
 
-        for (conn, addr) in ClientsList:
-            conn.settimeout(.2)
-            data = conn.recv(1024)
+                if not data or conn.fileno() < 0:                    
+                    print("user sent empty message, remove him from our list")
+                    ClientsList.remove(client)
+                    continue
 
-            if not data:
-                print("user sent empty message, exit")
-                exit("empty!!!")
+                print()
+                print(clientName, " said:", data.decode('utf-8'))
+            except socket.timeout:
+                print(".", end="", flush=True)
+                pass
 
-            print("user said: " + data.decode('utf-8'))
-
-        if len(ClientsList) > 0:
-            toSend = input("let's say to user: ")
-            for (conn, addr) in ClientsList:
+        # send message to all clients
+        if len(ClientsList) > 0 and ServerInput:
+            toSend = input("let's say to users: ")
+            for (conn, addr, clientName) in ClientsList:
                 conn.send(bytes(toSend, 'utf-8'))
 
     except socket.timeout:
