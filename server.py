@@ -16,47 +16,72 @@ $SEND_MSG:USER:message_body
 '''
 
 
-def tryNewUserConnect(userConnect: socket):
-    userConnect.settimeout(10)
+def tryNewUserConnect(userConnect: socket, timeout=2):
+    userConnect.settimeout(timeout)
     incomeMsg = userConnect.recv(1024)
     msg = incomeMsg.decode('utf-8')
 
     if(msg == proto.connect()):
-        userConnect.send(bytes(proto.connectionResult(True),'utf-8'))
+        userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
         return True
-    else:        
-        userConnect.send(bytes(proto.connectionResult(False),'utf-8'))
+    else:
+        userConnect.send(bytes(proto.connectionResult(False), 'utf-8'))
         return False
 
 
-addr, port = "192.168.1.100", 12345
+def acceptClient(clientsList: list, timeout=2):
+    try:
+        # wait for client timeout seconds
+        SrvSoket.settimeout(timeout)
+        conn, remoteAddr = SrvSoket.accept()
 
-srvSoket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # check connection by protocol
+        userConnResult = tryNewUserConnect(conn)
+        if(userConnResult == False):
+            print("Hacker attack detected")
 
-print("listening for ", addr, port)
-srvSoket.bind((addr, port))
-srvSoket.listen(1)
+        # our client has come, let's welcom him
+        conn.send(bytes('Dear somebody, you are at my ct2021 server!!!', 'utf-8'))
 
-conn, remoteAddr = srvSoket.accept()
+        # save new client connection to list
+        clientsList.append((conn, remoteAddr))
+        return conn
+    except socket.timeout:
+        # just exit from proc if no new connection was accepted
+        pass
 
-userConnResult = tryNewUserConnect(conn)
-if(userConnResult == False):
-    exit("Hacker attack detected")
 
-conn.send(bytes('Dear somebody, you are at my ct2021 server!!!', 'utf-8'))
+########################################################################
+###################### Main server program starts below ################
+########################################################################
+Addr, Port = "192.168.1.100", 12345
+SrvSoket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+ClientsList = []
 
+print("listening for ", Addr, Port)
+SrvSoket.bind((Addr, Port))
+SrvSoket.listen(30)
+
+# main loop
 while True:
     try:
-        conn.settimeout(.2)
-        data = conn.recv(1024)
 
-        if not data:
-            print("user sent empty message, exit")
-            exit("empty!!!")
+        acceptClient(ClientsList, .2)
 
-        print("user said: " + data.decode('utf-8'))
+        for (conn, addr) in ClientsList:
+            conn.settimeout(.2)
+            data = conn.recv(1024)
 
-        toSend = input("let's say to user: ")
-        conn.send(bytes(toSend, 'utf-8'))
+            if not data:
+                print("user sent empty message, exit")
+                exit("empty!!!")
+
+            print("user said: " + data.decode('utf-8'))
+
+        if len(ClientsList) > 0:
+            toSend = input("let's say to user: ")
+            for (conn, addr) in ClientsList:
+                conn.send(bytes(toSend, 'utf-8'))
+
     except socket.timeout:
         pass
