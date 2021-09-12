@@ -16,17 +16,17 @@ $$CONNECT:REJ - ошибка, соединение не удалось
 
 $DISCONNECT
 
-$REG:user_name - регистрация на сервере $$REG:OK - ок $$REG:BUSY - занято имя
+$REG:user_name - регистрация на сервере 
+$$REG:OK - ок 
+$$REG:BUSY - занято имя
 '''
 
 '''
 Комманда для подключения
 '''
 
-
 def connect():
     return "$CONNECT"
-
 
 def connectionResult(ok: bool):
     if(ok == True):
@@ -37,3 +37,4 @@ def connectionResult(ok: bool):
 
 def disconnect():
     return '$DISCONNECT'
+
