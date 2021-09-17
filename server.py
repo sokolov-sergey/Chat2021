@@ -1,6 +1,6 @@
 import socket
 import sys
-import proto
+import modules.proto as proto
 
 '''
 CT21 protocol
@@ -15,7 +15,6 @@ $REG_NIK:NICKNAME
 
 $SEND_MSG:USER:message_body
 '''
-
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
     userConnect.settimeout(timeout)
@@ -49,6 +48,7 @@ def acceptClient(clientsList: list, timeout=2):
 
         # save new client connection to list
         userName = "userId: "+str(UserId)
+        regClient(conn)
         newUser = (conn, remoteAddr, userName)
         clientsList.append(newUser)
         return newUser
@@ -57,9 +57,12 @@ def acceptClient(clientsList: list, timeout=2):
         pass
 
 
+def handleClientMessage(data: bytes, fromConn: socket, clinetName: str):    
+    print(clientName, " =>", data.decode('utf-8'))
 ########################################################################
 ###################### Main server program starts below ################
 ########################################################################
+
 
 Addr, Port = "192.168.1.100", 12345
 SrvSoket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -92,13 +95,13 @@ while True:
                 conn.settimeout(.1)
                 data = conn.recv(1024)
 
-                if not data or conn.fileno() < 0:                    
+                if not data or conn.fileno() < 0:
                     print("user sent empty message, remove him from our list")
                     ClientsList.remove(client)
                     continue
 
                 print()
-                print(clientName, " said:", data.decode('utf-8'))
+                handleClientMessage(data, fromConn=conn, clientName=clientName)
             except socket.timeout:
                 print(".", end="", flush=True)
                 pass
