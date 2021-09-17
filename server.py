@@ -56,6 +56,15 @@ def acceptClient(clientsList: list, timeout=2):
         # just exit from proc if no new connection was accepted
         pass
 
+def sendBroadcastMessage(fromClient, msg):
+    for client in ClientsList:
+        (conn, addr, clientName) = client
+        if clientName == fromClient:
+            continue
+        conn.send(bytes(msg, 'utf-8'))
+        
+        
+
 
 ########################################################################
 ###################### Main server program starts below ################
@@ -90,18 +99,21 @@ while True:
             try:
                 (conn, addr, clientName) = client
                 conn.settimeout(.1)
-                data = conn.recv(1024)
+                clientMsg = conn.recv(1024)
 
-                if not data or conn.fileno() < 0:                    
+                if not clientMsg or conn.fileno() < 0:                    
                     print("user sent empty message, remove him from our list")
                     ClientsList.remove(client)
                     continue
 
                 print()
-                print(clientName, " said:", data.decode('utf-8'))
+                print(clientName, " said:", clientMsg.decode('utf-8'))
+                sendBroadcastMessage(fromClient = clientName, msg =  clientMsg)
             except socket.timeout:
                 print(".", end="", flush=True)
                 pass
+            except:
+                print('Some error has occured...')
 
         # send message to all clients
         if len(ClientsList) > 0 and ServerInput:
