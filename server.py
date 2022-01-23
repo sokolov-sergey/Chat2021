@@ -13,10 +13,12 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
         incomeMsg = userConnect.recv(1024)
         msg = incomeMsg.decode('utf-8')
 
-
-        if(msg == proto.connect()):
+        cmd = proto.splitCommands(msg)
+        
+        if(proto.connect() in cmd):
             userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
-            return True
+            cmd.remove(proto.connect())
+            return cmd
         else:
             userConnect.send(bytes(proto.connectionResult(False), 'utf-8'))
             return False
@@ -28,22 +30,33 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
 UserId = 1
 
 
-def acceptClient(clientsList: list, timeout=2):
+def acceptClient(serverSocket: socket,clientsList: list, timeout=2):
     try:
         # wait for client timeout seconds
-        SrvSoket.settimeout(timeout)
-        conn, remoteAddr = SrvSoket.accept()
+        serverSocket.settimeout(timeout)
+        conn, remoteAddr = serverSocket.accept()
 
         # check connection by protocol
         userConnResult = tryNewUserConnect(conn)
         if(userConnResult == False):
             print("Hacker attack detected")
+            conn.close()
+            return
+
+        userName = ""
+        for x in userConnResult:
+            if proto.REG in x:
+                userName = x.split(":")[1]
+
+        if not userName:
+            print("Anonim is prohibited")
+            conn.close()
+            return
 
         # our client has come, let's welcom him
-        conn.send(bytes('Dear somebody, you are at my ct2021 server!!!', 'utf-8'))
+        conn.send(bytes('Dear '+userName+', you are at my ct2021 server!!!', 'utf-8'))
 
-        # save new client connection to list
-        userName = "userId: "+str(UserId)
+        # save new client connection to list        
         newUser = (conn, remoteAddr, userName)
         clientsList.append(newUser)
         return newUser
@@ -96,7 +109,7 @@ SrvSoket.listen(30)
 while True:
     try:
         # check for new connection
-        user = acceptClient(ClientsList, .2)
+        user = acceptClient(SrvSoket,ClientsList, .2)
         if user:
             UserId = len(ClientsList)+1
             print("a new user connected ", user[2])

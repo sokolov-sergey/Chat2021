@@ -39,16 +39,16 @@ def connectionResult(ok: bool):
 def disconnect():
     return '$DISCONNECT'
 
-
+REG = "$REG"
 def regUser(name: str):
-    return "$REG:"+name
+    return REG+":"+name
 
 
 def regUserResult(ok: bool):
     if(ok):
-        return "$$REG:OK"
+        return "$"+REG+":OK"
     else:
-        return "$$REG:BUSY"
+        return "$"+REG+":BUSY"
 
 # -----------------------------------------
 # special function to work with messages
@@ -61,7 +61,7 @@ def splitCommands(msg: str):
 
     # split the whole msg string on commands separated by $
     l = msg.split("$")
-    
+
     for x in l:
         # and remove empty element
         if x == "":
@@ -72,5 +72,3 @@ def splitCommands(msg: str):
 
     return list(map(lambda x: "$"+x, l))
 
-
-print(splitCommands("$dfg sdfgs$asfdsdgs gser$sadfsdf##sdfasdfga$"))

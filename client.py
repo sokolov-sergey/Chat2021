@@ -8,14 +8,15 @@ addrServer = '192.168.1.100' # '46.188.6.194'
 portServer =  12345
 
 # функция подключения. принимает параметры для подключения
-def connect(addr, port):
+def connect(addr, port, nickname):
     print('Connecting to ' +addr, port)
     srv = socket.socket()
     srv.connect((addr, port))
 
     # вызываем из модуля протокола proto.connect(), чтобы отправить на сервер 
     # запрос на подключение 
-    srv.send(bytes(proto.connect(),'utf-8'))  
+    rq = proto.connect()+proto.regUser(nickname)
+    srv.send(bytes(rq,'utf-8'))  
     resp = srv.recv(1024)
     respMsg = resp.decode('utf-8')
     print("Server said: ",respMsg)
@@ -29,7 +30,8 @@ def sendToServer(msg:str, server:socket):
     server.send(bytes(msg,'utf-8'))
 
  
-server = connect(addrServer, portServer)
+nickname = input("What is your nickname? ")
+server = connect(addrServer, portServer, nickname)
 
 if server == False:
     exit('Connection error')
