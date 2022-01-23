@@ -1,3 +1,4 @@
+from os import error
 import socket
 import sys
 import proto
@@ -57,11 +58,13 @@ def acceptClient(clientsList: list, timeout=2):
         pass
 
 def sendBroadcastMessage(fromClient, msg):
+    print("BCM Proc")
     for client in ClientsList:
         (conn, addr, clientName) = client
         if clientName == fromClient:
             continue
-        conn.send(bytes(msg, 'utf-8'))
+        print("BCM: ",msg)
+        conn.send(msg)
         
         
 
@@ -98,22 +101,28 @@ while True:
         for client in ClientsList:
             try:
                 (conn, addr, clientName) = client
-                conn.settimeout(.1)
-                clientMsg = conn.recv(1024)
-
-                if not clientMsg or conn.fileno() < 0:                    
+                
+                if conn.fileno() < 0:                    
                     print("user sent empty message, remove him from our list")
                     ClientsList.remove(client)
+                    continue             
+                
+                try:
+                    conn.settimeout(.1)
+                    clientMsg = conn.recv(1024)
+                    if not clientMsg:
+                        continue 
+                    sendBroadcastMessage(fromClient = clientName, msg =  clientMsg)
+                except socket.timeout:
+                    print(".", end="")
                     continue
+
+
 
                 print()
                 print(clientName, " said:", clientMsg.decode('utf-8'))
-                sendBroadcastMessage(fromClient = clientName, msg =  clientMsg)
-            except socket.timeout:
-                print(".", end="", flush=True)
-                pass
-            except:
-                print('Some error has occured...')
+            except error as err:
+                print('Some error has occured...', err)
 
         # send message to all clients
         if len(ClientsList) > 0 and ServerInput:
