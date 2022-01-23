@@ -62,14 +62,17 @@ def acceptClient(clientsList: list, timeout=2):
         pass
 
 
-def sendBroadcastMessage(fromClient, msg):
+def sendBroadcastMessage(fromClient, msg, clientList:list):
     print("BCM Proc")
-    for client in ClientsList:
-        (conn, addr, clientName) = client
-        if clientName == fromClient:
-            continue
-        print("BCM: ", msg)
-        conn.send(msg)
+    for client in clientList:
+        try:
+            (conn, addr, clientName) = client
+            if clientName == fromClient:
+                continue
+            print("BCM: ", msg)
+            conn.send(msg)
+        except:
+            removeClient(client, clientList)
 
 
 def removeClient(client, clientList: list):
@@ -111,19 +114,24 @@ while True:
         # receive clients messages
         for client in ClientsList:
             try:
+                # variable client is a tuple and contains 3 values inside itself
                 (conn, addr, clientName) = client
 
                 if conn.fileno() < 0:
+                    # a case when a client may send empty
                     print("user sent empty message, remove him from our list")
                     removeClient(client, ClientsList)
                     continue
 
                 try:
+                    # receive from a message client and send to all the clients
                     conn.settimeout(.3)
                     clientMsg = conn.recv(1024)
+                    
                     if not clientMsg:
                         continue
-                    sendBroadcastMessage(fromClient=clientName, msg=clientMsg)
+
+                    sendBroadcastMessage(fromClient=clientName, msg=clientMsg,clientList=ClientsList)
                 except socket.timeout:
                     print(".", end="")
                     continue
@@ -131,11 +139,12 @@ while True:
                 print()
                 print(clientName, " said:", clientMsg.decode('utf-8'))
             except ConnectionResetError:
+                # client lost connection
                 print("Connection with", clientName, "was lost")
                 removeClient(client, ClientsList)
             except error as err:
-                print(
-                    'Client will be deleted from server because some error has occured...', err)
+                # otheк error occured while procession client
+                print('Client will be deleted from server because some error has occured...', err)
                 removeClient(client, ClientsList)
 
         # send message to all clients
