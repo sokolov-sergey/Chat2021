@@ -19,15 +19,19 @@ $SEND_MSG:USER:message_body
 
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
-    userConnect.settimeout(timeout)
-    incomeMsg = userConnect.recv(1024)
-    msg = incomeMsg.decode('utf-8')
+    try:
+        userConnect.settimeout(timeout)
+        incomeMsg = userConnect.recv(1024)
+        msg = incomeMsg.decode('utf-8')
 
-    if(msg == proto.connect()):
-        userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
-        return True
-    else:
-        userConnect.send(bytes(proto.connectionResult(False), 'utf-8'))
+        if(msg == proto.connect()):
+            userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
+            return True
+        else:
+            userConnect.send(bytes(proto.connectionResult(False), 'utf-8'))
+            return False
+    except:
+        print("Unable to accept a new user")
         return False
 
 
@@ -57,23 +61,30 @@ def acceptClient(clientsList: list, timeout=2):
         # just exit from proc if no new connection was accepted
         pass
 
+
 def sendBroadcastMessage(fromClient, msg):
     print("BCM Proc")
     for client in ClientsList:
         (conn, addr, clientName) = client
         if clientName == fromClient:
             continue
-        print("BCM: ",msg)
+        print("BCM: ", msg)
         conn.send(msg)
-        
-        
+
+
+def removeClient(client, clientList: list):
+    if client in clientList:
+        (conn, a, name) = client
+        conn.close()
+        clientList.remove(client)
+        print("Client ", name, "was removed from the server")
 
 
 ########################################################################
 ###################### Main server program starts below ################
 ########################################################################
-
 Addr, Port = "192.168.1.100", 12345
+
 SrvSoket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 ClientsList = []
 
@@ -101,28 +112,31 @@ while True:
         for client in ClientsList:
             try:
                 (conn, addr, clientName) = client
-                
-                if conn.fileno() < 0:                    
+
+                if conn.fileno() < 0:
                     print("user sent empty message, remove him from our list")
-                    ClientsList.remove(client)
-                    continue             
-                
+                    removeClient(client, ClientsList)
+                    continue
+
                 try:
-                    conn.settimeout(.1)
+                    conn.settimeout(.3)
                     clientMsg = conn.recv(1024)
                     if not clientMsg:
-                        continue 
-                    sendBroadcastMessage(fromClient = clientName, msg =  clientMsg)
+                        continue
+                    sendBroadcastMessage(fromClient=clientName, msg=clientMsg)
                 except socket.timeout:
                     print(".", end="")
                     continue
 
-
-
                 print()
                 print(clientName, " said:", clientMsg.decode('utf-8'))
+            except ConnectionResetError:
+                print("Connection with", clientName, "was lost")
+                removeClient(client, ClientsList)
             except error as err:
-                print('Some error has occured...', err)
+                print(
+                    'Client will be deleted from server because some error has occured...', err)
+                removeClient(client, ClientsList)
 
         # send message to all clients
         if len(ClientsList) > 0 and ServerInput:
