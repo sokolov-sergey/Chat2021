@@ -4,7 +4,7 @@ ch21 Server
 from os import error
 import socket
 import sys
-import proto
+import modules.proto as proto
 
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
@@ -13,11 +13,15 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
         incomeMsg = userConnect.recv(1024)
         msg = incomeMsg.decode('utf-8')
 
+        # get command list from recieved message
         cmd = proto.splitCommands(msg)
         
         if(proto.connect() in cmd):
+            # it's ok, there's connection command. Send response and remove conn command
             userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
             cmd.remove(proto.connect())
+
+            # return the rest of commands
             return cmd
         else:
             userConnect.send(bytes(proto.connectionResult(False), 'utf-8'))
@@ -43,11 +47,13 @@ def acceptClient(serverSocket: socket,clientsList: list, timeout=2):
             conn.close()
             return
 
+        # extract $REG command and user name
         userName = ""
         for x in userConnResult:
             if proto.REG in x:
                 userName = x.split(":")[1]
 
+        # user name was not received exit
         if not userName:
             print("Anonim is prohibited")
             conn.close()

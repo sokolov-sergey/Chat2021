@@ -1,7 +1,8 @@
 from os import error
 import time
 import socket
-import proto
+import modules.proto as proto
+
 
 # объявление переменных
 addrServer = '192.168.1.100' # '46.188.6.194'
