@@ -1,21 +1,10 @@
+'''
+ch21 Server 
+'''
 from os import error
 import socket
 import sys
 import proto
-
-'''
-CT21 protocol
-$XXXXX - request cmd
-$$XXXX -  response
-
-$CONNECT - connect request
-$$CONNECT_OK - connection is established
-$$CONNECT_REJ - Connection rejected
-
-$REG_NIK:NICKNAME
-
-$SEND_MSG:USER:message_body
-'''
 
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
@@ -23,6 +12,7 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
         userConnect.settimeout(timeout)
         incomeMsg = userConnect.recv(1024)
         msg = incomeMsg.decode('utf-8')
+
 
         if(msg == proto.connect()):
             userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
