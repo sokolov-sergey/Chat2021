@@ -32,6 +32,7 @@ def connect(addr, port, nickname):
 def sendToServer(server:socket, msg:str):
     tsf.send(server, msg)
 
+
 if __name__ == "__main__":
 
     nickname = input("What is your nickname? ")

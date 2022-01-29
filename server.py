@@ -1,10 +1,11 @@
 '''
-ch21 Server 
+ch21 Server
 '''
 from os import error
 import socket
 import sys
 import modules.proto as proto
+import modules.transfer as tsf
 
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
@@ -15,7 +16,7 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
 
         # get command list from recieved message
         cmd = proto.splitCommands(msg)
-        
+
         if(proto.connect() in cmd):
             # it's ok, there's connection command. Send response and remove conn command
             userConnect.send(bytes(proto.connectionResult(True), 'utf-8'))
@@ -34,7 +35,7 @@ def tryNewUserConnect(userConnect: socket, timeout=2):
 UserId = 1
 
 
-def acceptClient(serverSocket: socket,clientsList: list, timeout=2):
+def acceptClient(serverSocket: socket, clientsList: list, timeout=2):
     try:
         # wait for client timeout seconds
         serverSocket.settimeout(timeout)
@@ -60,9 +61,10 @@ def acceptClient(serverSocket: socket,clientsList: list, timeout=2):
             return
 
         # our client has come, let's welcom him
-        conn.send(bytes('Dear '+userName+', you are at my ct2021 server!!!', 'utf-8'))
+        conn.send(bytes('Dear '+userName +
+                  ', you are at my ct2021 server!!!', 'utf-8'))
 
-        # save new client connection to list        
+        # save new client connection to list
         newUser = (conn, remoteAddr, userName)
         clientsList.append(newUser)
         return newUser
@@ -71,13 +73,14 @@ def acceptClient(serverSocket: socket,clientsList: list, timeout=2):
         pass
 
 
-def sendBroadcastMessage(fromClient, msg, clientList:list):
+def sendBroadcastMessage(fromClient, msg, clientList: list):
     print("BCM Proc")
     for client in clientList:
         try:
             (conn, addr, clientName) = client
             if clientName == fromClient:
                 continue
+
             print("BCM: ", msg)
             conn.send(msg)
         except:
@@ -112,10 +115,12 @@ SrvSoket.bind((Addr, Port))
 SrvSoket.listen(30)
 
 # main loop
+needSendUserList = 5
+
 while True:
     try:
         # check for new connection
-        user = acceptClient(SrvSoket,ClientsList, .2)
+        user = acceptClient(SrvSoket, ClientsList, .2)
         if user:
             UserId = len(ClientsList)+1
             print("a new user connected ", user[2])
@@ -133,14 +138,21 @@ while True:
                     continue
 
                 try:
+                    if needSendUserList <= 0 and len(ClientsList) > 1:
+                        users = list(map(lambda x: x[2], ClientsList))
+                        print("send user list", users)
+                        tsf.send(conn, proto.makeUserList(users))
+                        continue
+
                     # receive from a message client and send to all the clients
                     conn.settimeout(.3)
-                    clientMsg = conn.recv(1024)
-                    
+                    clientMsg=conn.recv(1024)
+
                     if not clientMsg:
                         continue
 
-                    sendBroadcastMessage(fromClient=clientName, msg=clientMsg,clientList=ClientsList)
+                    sendBroadcastMessage(
+                        fromClient=clientName, msg=clientMsg, clientList=ClientsList)
                 except socket.timeout:
                     print(".", end="")
                     continue
@@ -153,12 +165,18 @@ while True:
                 removeClient(client, ClientsList)
             except error as err:
                 # otheк error occured while procession client
-                print('Client will be deleted from server because some error has occured...', err)
+                print(
+                    'Client will be deleted from server because some error has occured...', err)
                 removeClient(client, ClientsList)
+
+        if needSendUserList > 0:
+            needSendUserList=needSendUserList-1
+        else:
+            needSendUserList=5
 
         # send message to all clients
         if len(ClientsList) > 0 and ServerInput:
-            toSend = input("let's say to users: ")
+            toSend=input("let's say to users: ")
             for (conn, addr, clientName) in ClientsList:
                 conn.send(bytes(toSend, 'utf-8'))
 

@@ -18,13 +18,14 @@ $DISCONNECT
 $REG:user_name - регистрация на сервере 
 $$REG:OK - ок 
 $$REG:BUSY - занято имя
+
+$$USERS:user1,user2....
+
 '''
 
 '''
 Комманда для подключения
 '''
-
-
 def connect():
     return "$CONNECT"
 
@@ -49,6 +50,31 @@ def regUserResult(ok: bool):
         return "$"+REG+":OK"
     else:
         return "$"+REG+":BUSY"
+
+USER_LIST = "$$USERS"
+def userList():
+    return USER_LIST
+
+def isUserList(msg)->bool:
+    if USER_LIST in msg:
+        return True
+    else: 
+        return False
+
+def getUserList(msg: str)->list:
+    try:
+        res = msg.split(":")[1]
+        users = res.split(",")
+        return users
+    except:
+        return []
+
+def makeUserList(users: list)->str:
+    csvList=USER_LIST+":"
+    if users:
+        csvList = csvList + ",".join(users)
+
+    return csvList    
 
 # -----------------------------------------
 # special function to work with messages

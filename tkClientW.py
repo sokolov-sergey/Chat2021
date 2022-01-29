@@ -7,6 +7,7 @@ import client
 from socket import socket,timeout
 from functools import partial
 import modules.transfer as tsf
+import modules.proto as proto
 
 
 ServerSocket: socket = None
@@ -75,7 +76,9 @@ usrFrame = tk.LabelFrame(MainW, text='Users', padx=10, pady=5)
 usrFrame.columnconfigure(0, weight=100)
 usrFrame.rowconfigure(0, weight=100)
 usrFrame.grid(column=0, row=1, sticky='nswe')
-tk.Listbox(usrFrame, bg='#D0F3A7').grid(column=0, row=0, sticky='nswe')
+
+userListBox = tk.Listbox(usrFrame, bg='#D0F3A7')
+userListBox.grid(column=0, row=0, sticky='nswe')
 
 #################################
 msgFrame = tk.LabelFrame(MainW, text='Messages', padx=10, pady=5)
@@ -94,6 +97,11 @@ btnSend = ttk.Button(msgFrame, text='send',
                      command=lambda: sendMsg(newMsg.get()))
 btnSend.grid(column=1, row=2, sticky='e')
 
+def updateUserList(users: list):
+    userListBox.delete(0,10000)
+    userListBox.insert(0,*users)
+
+
 
 ##################################
 
@@ -108,6 +116,10 @@ def receive():
             if not srvMsg:
                 log("empty message from server has come")
 
+            # $$USERS:user1,user2....
+            if proto.isUserList(srvMsg):
+                updateUserList(proto.getUserList(srvMsg))
+
             outputMsg= 'Server message ['+time.strftime("%H:%M:%S")+']: '+ srvMsg
             log(outputMsg)
         except timeout as ex:
@@ -120,8 +132,7 @@ def receive():
 
         except Exception as ex:
             log(ex.strerror)
-            return
-            
+            return         
 
 
 
