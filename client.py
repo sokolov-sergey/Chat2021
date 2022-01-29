@@ -29,7 +29,7 @@ def connect(addr, port, nickname):
 
     return srv    
 
-def sendToServer(msg:str, server:socket):
+def sendToServer(server:socket, msg:str):
     tsf.send(server, msg)
 
 if __name__ == "__main__":
@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 print('Quitting the chat...')
                 break
             else:
-                sendToServer(msg,server)
+                sendToServer(server,msg)
 
             try:
                 server.settimeout(0.1)

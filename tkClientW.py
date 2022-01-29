@@ -5,14 +5,13 @@ import threading
 import time
 import client
 from socket import socket
+from functools import partial
 
-ServerSocket: socket
+ServerSocket:socket = None
 
-
-def sendMsg():
+def sendMsg(msg):    
     global ServerSocket
-    msg = newMsg.get()
-    client.sendToServer(msg, ServerSocket)
+    client.sendToServer(ServerSocket,msg)
     log(msg)
 
 
@@ -20,7 +19,7 @@ def log(str):
     msgList.insert(0, str)
 
 
-def connectToServer():
+def connectToServer():  
     global ServerSocket
     try:
         addr = srvAddrEntry.get()
@@ -33,7 +32,6 @@ def connectToServer():
             log('Connected')
     except error as err:
         log('Error:'+err.strerror)
-
 
 #####################################
 
@@ -61,6 +59,7 @@ srvPortEntry.insert(0, '12345')
 
 ttk.Button(connFrame, text='Connect',
            command=connectToServer).grid(column=4, row=0)
+
 ttk.Label(connFrame, text='as', width=2).grid(column=5, row=0)
 usernameEntry = ttk.Entry(connFrame, width=20)
 usernameEntry.grid(column=6, row=0)
@@ -84,7 +83,7 @@ msgList.grid(column=0, row=0, columnspan=2, sticky='nswe')
 newMsg = ttk.Entry(msgFrame)
 newMsg.grid(column=0, row=2, sticky='swe')
 
-btnSend = ttk.Button(msgFrame, text='send', command=sendMsg)
+btnSend = ttk.Button(msgFrame, text='send', command=lambda:sendMsg(newMsg.get()))
 btnSend.grid(column=1, row=2, sticky='e')
 
 
