@@ -147,9 +147,9 @@ while True:
 
                 print()
                 print(clientName, " said:", clientMsg.decode('utf-8'))
-            except ConnectionResetError:
+            except ConnectionResetError as ex:
                 # client lost connection
-                print("Connection with", clientName, "was lost")
+                print("Connection with", clientName, "was lost.", ex.strerror)
                 removeClient(client, ClientsList)
             except error as err:
                 # otheк error occured while procession client
