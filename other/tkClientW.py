@@ -1,9 +1,11 @@
 import tkinter as tk
 from tkinter import ttk
-
+import threading
+import time
 
 def sendMsg():
     msgList.insert(1,newMsg.get())
+
 
 MainW = tk.Tk()
 MainW.title('CH 2021')
@@ -29,7 +31,7 @@ usrFrame = tk.LabelFrame(MainW, text='Users', padx=10, pady=5)
 usrFrame.columnconfigure(0,weight=100)
 usrFrame.rowconfigure(0,weight=100)
 usrFrame.grid(column=0, row=1, sticky='nswe')
-tk.Listbox(usrFrame).grid(column=0, row=0, sticky='nswe')
+tk.Listbox(usrFrame,bg='#D0F3A7').grid(column=0, row=0, sticky='nswe')
 
 #################################
 msgFrame = tk.LabelFrame(MainW, text='Messages', padx=10, pady=5)
@@ -39,13 +41,30 @@ msgFrame.columnconfigure(1,weight= 20)
 msgFrame.rowconfigure(0,weight= 90)
 msgFrame.rowconfigure(1,weight= 10)
 
-msgList = tk.Listbox(msgFrame)
+msgList = tk.Listbox(msgFrame,bg='#9CCAC2')
 msgList.grid(column=0, row=0, columnspan=2, sticky='nswe')
 newMsg = ttk.Entry(msgFrame)
 newMsg.grid(column=0,row=2,sticky='swe')
 
-ttk.Button(msgFrame,text='send',command=sendMsg).grid(column=1,row=2,sticky='e')
+btnSend = ttk.Button(msgFrame,text='send',command=sendMsg)
+btnSend.grid(column=1,row=2,sticky='e')
 
+style = ttk.Style()
+style.configure('TButton',background='lightblue')
+
+
+##################################
+
+def autoSend():
+    try:
+        while True:
+            msgList.insert(0,time.strftime("%H:%M:%S"))
+            time.sleep(1)
+    except:
+        pass
+
+tr = threading.Thread(target=autoSend)
+tr.start()
 
 MainW.mainloop()
 
