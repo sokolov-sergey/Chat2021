@@ -4,22 +4,26 @@ from tkinter import ttk
 import threading
 import time
 import client
-from socket import socket
+from socket import socket,timeout
 from functools import partial
+import modules.transfer as tsf
 
-ServerSocket:socket = None
 
-def sendMsg(msg):    
+ServerSocket: socket = None
+
+
+def sendMsg(msg):
     global ServerSocket
-    client.sendToServer(ServerSocket,msg)
+    client.sendToServer(ServerSocket, msg)
     log(msg)
 
 
 def log(str):
+    print(str)
     msgList.insert(0, str)
 
 
-def connectToServer():  
+def connectToServer():
     global ServerSocket
     try:
         addr = srvAddrEntry.get()
@@ -30,10 +34,13 @@ def connectToServer():
             log('Error:could not connect to Server')
         else:
             log('Connected')
+            tr = threading.Thread(target=receive)
+            tr.start()
     except error as err:
         log('Error:'+err.strerror)
 
 #####################################
+
 
 MainW = tk.Tk()
 MainW.title('CH 2021')
@@ -83,24 +90,41 @@ msgList.grid(column=0, row=0, columnspan=2, sticky='nswe')
 newMsg = ttk.Entry(msgFrame)
 newMsg.grid(column=0, row=2, sticky='swe')
 
-btnSend = ttk.Button(msgFrame, text='send', command=lambda:sendMsg(newMsg.get()))
+btnSend = ttk.Button(msgFrame, text='send',
+                     command=lambda: sendMsg(newMsg.get()))
 btnSend.grid(column=1, row=2, sticky='e')
 
 
 ##################################
 
-def autoSend():
-    return
-    try:
-        while True:
-            msgList.insert(0, time.strftime("%H:%M:%S"))
-            time.sleep(1)
-    except:
-        pass
+def receive():
+    global ServerSocket
+    
+    while True:
+        try:
+            ServerSocket.settimeout(0.3)
+            srvMsg = tsf.recv(ServerSocket)
+            print("msg size:", len(srvMsg))
+            if not srvMsg:
+                log("empty message from server has come")
+
+            outputMsg= 'Server message ['+time.strftime("%H:%M:%S")+']: '+ srvMsg
+            log(outputMsg)
+        except timeout as ex:
+            pass
+
+        except ConnectionResetError as ex:
+            msg = "Disconnected from the server: {0}. Try to reconnect".format(ex.strerror)            
+            log(msg)
+            return
+
+        except Exception as ex:
+            log(ex.strerror)
+            return
+            
 
 
-tr = threading.Thread(target=autoSend)
-tr.start()
+
 
 MainW.mainloop()
 
