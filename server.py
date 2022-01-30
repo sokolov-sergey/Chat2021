@@ -6,7 +6,12 @@ import socket
 import sys
 import modules.proto as proto
 import modules.transfer as tsf
+import server_const as sett
 
+_SETT ={
+    sett.NOTIFY_USER_LIST:10,
+    
+    }
 
 def tryNewUserConnect(userConnect: socket, timeout=2):
     try:
@@ -115,12 +120,12 @@ SrvSoket.bind((Addr, Port))
 SrvSoket.listen(30)
 
 # main loop
-needSendUserList = 5
+needSendUserList = _SETT[sett.NOTIFY_USER_LIST]
 
 while True:
     try:
         # check for new connection
-        user = acceptClient(SrvSoket, ClientsList, .2)
+        user = acceptClient(SrvSoket, ClientsList, .01)
         if user:
             UserId = len(ClientsList)+1
             print("a new user connected ", user[2])
@@ -145,7 +150,7 @@ while True:
                         continue
 
                     # receive from a message client and send to all the clients
-                    conn.settimeout(.3)
+                    conn.settimeout(.01)
                     clientMsg=conn.recv(1024)
 
                     if not clientMsg:
@@ -172,7 +177,7 @@ while True:
         if needSendUserList > 0:
             needSendUserList=needSendUserList-1
         else:
-            needSendUserList=5
+            needSendUserList=_SETT[sett.NOTIFY_USER_LIST]
 
         # send message to all clients
         if len(ClientsList) > 0 and ServerInput:

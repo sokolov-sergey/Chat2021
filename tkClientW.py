@@ -45,7 +45,7 @@ def connectToServer():
 
 MainW = tk.Tk()
 MainW.title('CH 2021')
-MainW.geometry("600x700+100+100")
+MainW.geometry("430x150+100+100")
 MainW.columnconfigure(0, weight=20)
 MainW.columnconfigure(1, weight=80)
 MainW.rowconfigure(0, weight=5)
@@ -119,6 +119,7 @@ def receive():
             # $$USERS:user1,user2....
             if proto.isUserList(srvMsg):
                 updateUserList(proto.getUserList(srvMsg))
+                continue
 
             outputMsg= 'Server message ['+time.strftime("%H:%M:%S")+']: '+ srvMsg
             log(outputMsg)
