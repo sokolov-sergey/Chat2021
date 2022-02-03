@@ -1,3 +1,15 @@
-l = [(1,20),(3,40),(7,99)]
+def parseUserMessage(msg:str)->list:
+    msgFromUser = msg
+    split = msgFromUser.split(':')
+    return split
+    
 
-map(lambda: x)
+print(parseUserMessage("$$MESSAGE:USER:HHMMSS:INCOMING"))
+
+
+
+'''
+print(parseUserMessage(""))
+print(parseUserMessage("A:B:C"))
+
+'''
